@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { CalendarIcon, Users, Crown, UserPlus, Plus, Trash2, Edit2, Save, X, FileText, ArrowUpDown, ArrowUp, ArrowDown, ListChecks, Clock } from "lucide-react";
 import OperatorAssignDialog from "@/components/events/OperatorAssignDialog";
 import ShiftPlanningForm from "@/components/events/ShiftPlanningForm";
-import { ShiftHeader } from "@/components/ShiftHeader";
+import ShiftHeader from "@/components/ShiftHeader";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,7 +40,7 @@ const EventDetail = () => {
   const addSlotToShift = useAppStore(s => s.addSlotToShift);
   
   // State for individual row time editing - each row has its own independent times
-  const [slotTimes, setSlotTimes] = useState<{[key: string]: {startTime?: string, endTime?: string}}>({});
+  const [slotTimes, setSlotTimes] = useState<{[key: string]: {start?: string, end?: string}}>({});
   const shifts = useAppStore(s => s.getShiftsByEvent(id!));
   const clientName = useMemo(() => clients.find(c => c.id === event?.clientId)?.name, [clients, event]);
   const brandName = useMemo(() => brands.find(b => b.id === event?.brandId)?.name, [brands, event]);
@@ -147,8 +147,8 @@ const EventDetail = () => {
         const slotKey = `${shift.id}-${slotIndex}`;
         const slotTime = slotTimes[slotKey];
         
-        const startTime = slotTime?.startTime || shift.startTime;
-        const endTime = slotTime?.endTime || shift.endTime;
+        const startTime = slotTime?.start || shift.startTime;
+        const endTime = slotTime?.end || shift.endTime;
         
         const slotStartTime = new Date(`2000-01-01T${startTime}`);
         const slotEndTime = new Date(`2000-01-01T${endTime}`);
@@ -370,7 +370,7 @@ const EventDetail = () => {
                            <TableCell>
                              {(() => {
                                const slotKey = `${shift.id}-${slotIndex}`;
-                               const currentTime = slotTimes[slotKey]?.startTime || shift.startTime;
+                               const currentTime = slotTimes[slotKey]?.start || shift.startTime;
                                return (
                                  <input
                                    type="time"
@@ -380,8 +380,8 @@ const EventDetail = () => {
                                         ...prev,
                                         [slotKey]: {
                                           ...prev[slotKey],
-                                          startTime: e.target.value,
-                                          endTime: prev[slotKey]?.endTime || shift.endTime
+                                           start: e.target.value,
+                                           end: prev[slotKey]?.end || shift.endTime
                                         }
                                       }));
                                    }}
@@ -393,7 +393,7 @@ const EventDetail = () => {
                            <TableCell>
                              {(() => {
                                const slotKey = `${shift.id}-${slotIndex}`;
-                               const currentTime = slotTimes[slotKey]?.endTime || shift.endTime;
+                               const currentTime = slotTimes[slotKey]?.end || shift.endTime;
                                return (
                                  <input
                                    type="time"
@@ -403,8 +403,8 @@ const EventDetail = () => {
                                         ...prev,
                                         [slotKey]: {
                                           ...prev[slotKey],
-                                          startTime: prev[slotKey]?.startTime || shift.startTime,
-                                          endTime: e.target.value
+                                           start: prev[slotKey]?.start || shift.startTime,
+                                           end: e.target.value
                                         }
                                       }));
                                    }}
