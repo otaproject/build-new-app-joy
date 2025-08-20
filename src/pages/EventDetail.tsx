@@ -192,58 +192,50 @@ const EventDetail = () => {
 
       {/* Event info header and shift planning */}
       <section className="mb-8">
-        <div className="flex gap-6">
+        <div className="flex gap-8">
           {/* Left side - Event details (60%) */}
           <div className="flex-1 max-w-[60%]">
-            <h1 className="font-semibold mb-4 text-4xl">{event.title}</h1>
+            <h1 className="font-bold mb-6 text-3xl text-primary uppercase tracking-wide">{event.title}</h1>
             
             {/* Event details under title */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">
-                  {event.clientId && event.brandId ? 
-                    `${clients.find(c => c.id === event.clientId)?.name || 'Cliente'} - ${brands.find(b => b.id === event.brandId)?.name || 'Brand'}` 
-                    : 'Cliente - Brand non specificato'}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-muted-foreground" />
                 <Input
                   value={event.address}
                   onChange={(e) => updateEvent(event.id, { address: e.target.value })}
-                  className="flex-1 h-8 max-w-md"
-                  placeholder="Indirizzo evento"
+                  className="flex-1 h-10 border-0 border-b-2 border-border rounded-none focus:border-primary bg-transparent"
+                  placeholder="Viale Montenapeoleone 10, Milano"
                 />
               </div>
               
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-muted-foreground" />
+                <span className="text-foreground">
                   {event.startDate && event.endDate ? (
                     event.startDate === event.endDate 
-                      ? event.startDate.split("-").reverse().join("/")
-                      : `DAL ${event.startDate.split("-").reverse().join("/")} AL ${event.endDate.split("-").reverse().join("/")}`
-                  ) : 'Date non specificate'}
+                      ? `dal ${event.startDate.split("-").reverse().join("/")} al ${event.endDate.split("-").reverse().join("/")}`
+                      : `dal ${event.startDate.split("-").reverse().join("/")} al ${event.endDate.split("-").reverse().join("/")}`
+                  ) : 'dal 25/08/25 al 28/08/25'}
                 </span>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-muted-foreground" />
                 <Input
                   value={event.notes || ''}
                   onChange={(e) => updateEvent(event.id, { notes: e.target.value })}
-                  className="flex-1 h-8 max-w-md"
-                  placeholder="Note evento"
+                  className="flex-1 h-10 border-0 border-b-2 border-border rounded-none focus:border-primary bg-transparent"
+                  placeholder="Necessità di GPG..."
                 />
               </div>
               
-              <div className="flex items-center gap-2">
-                <Badge className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-3">
+                <Badge className="h-5 w-5 text-muted-foreground" />
                 <Input
                   value={event.activityCode || ''}
                   onChange={(e) => updateEvent(event.id, { activityCode: e.target.value })}
-                  className="flex-1 h-8 max-w-md"
+                  className="flex-1 h-10 border-0 border-b-2 border-border rounded-none focus:border-primary bg-transparent"
                   placeholder="Codice attività"
                 />
               </div>

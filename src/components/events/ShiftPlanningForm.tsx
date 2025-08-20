@@ -65,8 +65,8 @@ const ShiftPlanningForm = ({ onSubmit, onReset }: ShiftPlanningFormProps) => {
   };
 
   return (
-    <div className="bg-accent/20 rounded-lg p-6 border border-accent/40">
-      <h2 className="text-xl font-medium text-primary mb-6">Inserimento turno</h2>
+    <div className="bg-muted/30 rounded-lg p-6 border border-border">
+      <h2 className="text-lg font-medium text-foreground mb-6">Inserimento turno</h2>
       
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -164,37 +164,15 @@ const ShiftPlanningForm = ({ onSubmit, onReset }: ShiftPlanningFormProps) => {
 
           {/* N°operatori */}
           <div className="space-y-2">
-            <div className="relative">
-              <Input
-                type="number"
-                min="1"
-                max="20"
-                placeholder="N° operatori"
-                className="h-11 pr-10 text-center"
-                value={form.watch("numOperators")}
-                onChange={(e) => form.setValue("numOperators", parseInt(e.target.value) || 1)}
-              />
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex flex-col">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 hover:bg-muted"
-                  onClick={incrementOperators}
-                >
-                  <ChevronUp className="h-3 w-3" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 hover:bg-muted"
-                  onClick={decrementOperators}
-                >
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
+            <Input
+              type="number"
+              min="1"
+              max="20"
+              placeholder="N° operatori"
+              className="h-11 text-center [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+              value={form.watch("numOperators")}
+              onChange={(e) => form.setValue("numOperators", parseInt(e.target.value) || 1)}
+            />
             {form.formState.errors.numOperators && (
               <p className="text-sm text-destructive">{form.formState.errors.numOperators.message}</p>
             )}
