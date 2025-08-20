@@ -164,15 +164,37 @@ const ShiftPlanningForm = ({ onSubmit, onReset }: ShiftPlanningFormProps) => {
 
           {/* N°operatori */}
           <div className="space-y-2">
-            <Input
-              type="number"
-              min="1"
-              max="20"
-              placeholder="N° operatori"
-              className="h-11 text-center [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-              value={form.watch("numOperators")}
-              onChange={(e) => form.setValue("numOperators", parseInt(e.target.value) || 1)}
-            />
+            <div className="relative">
+              <Input
+                type="number"
+                min="1"
+                max="20"
+                placeholder="N° operatori"
+                className="h-11 text-center pr-8"
+                value={form.watch("numOperators")}
+                onChange={(e) => form.setValue("numOperators", parseInt(e.target.value) || 1)}
+              />
+              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-6 p-0 hover:bg-muted"
+                  onClick={incrementOperators}
+                >
+                  <ChevronUp className="h-3 w-3" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-6 p-0 hover:bg-muted"
+                  onClick={decrementOperators}
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
             {form.formState.errors.numOperators && (
               <p className="text-sm text-destructive">{form.formState.errors.numOperators.message}</p>
             )}

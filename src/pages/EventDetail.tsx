@@ -107,8 +107,14 @@ const EventDetail = () => {
     return hours.toFixed(1);
   };
 
-  const handleSaveNotes = (shiftId: string) => {
-    updateShiftNotes(shiftId, tempNotes);
+  const handleSaveNotes = (noteKey: string) => {
+    if (noteKey.includes('-')) {
+      // It's a slot-specific note
+      setSlotNotes(prev => ({ ...prev, [noteKey]: tempNotes }));
+    } else {
+      // It's a shift note
+      updateShiftNotes(noteKey, tempNotes);
+    }
     setEditingNotes(null);
   };
 
@@ -193,8 +199,8 @@ const EventDetail = () => {
       {/* Event info header and shift planning */}
       <section className="mb-8">
         <div className="flex gap-8">
-          {/* Left side - Event details (60%) */}
-          <div className="flex-1 max-w-[60%]">
+          {/* Left side - Event details (40%) */}
+          <div className="flex-[0_0_40%]">
             <h1 className="font-bold mb-6 text-3xl text-primary uppercase tracking-wide">{event.title}</h1>
             
             {/* Event details under title */}
@@ -204,20 +210,32 @@ const EventDetail = () => {
                 <Input
                   value={event.address}
                   onChange={(e) => updateEvent(event.id, { address: e.target.value })}
-                  className="flex-1 h-10 border-0 border-b-2 border-border rounded-none focus:border-primary bg-transparent"
+                  className="flex-1 h-10 border-0 border-b border-border/30 rounded-none focus:border-primary bg-transparent"
                   placeholder="Viale Montenapeoleone 10, Milano"
                 />
               </div>
               
               <div className="flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
-                <span className="text-foreground">
-                  {event.startDate && event.endDate ? (
-                    event.startDate === event.endDate 
-                      ? `dal ${event.startDate.split("-").reverse().join("/")} al ${event.endDate.split("-").reverse().join("/")}`
-                      : `dal ${event.startDate.split("-").reverse().join("/")} al ${event.endDate.split("-").reverse().join("/")}`
-                  ) : 'dal 25/08/25 al 28/08/25'}
-                </span>
+                <div className="flex-1">
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      value={event.startDate || ''}
+                      onChange={(e) => updateEvent(event.id, { startDate: e.target.value })}
+                      className="h-10 border-0 border-b border-border/30 rounded-none focus:border-primary bg-transparent"
+                      placeholder="Data inizio"
+                    />
+                    <span className="self-center text-muted-foreground">al</span>
+                    <Input
+                      type="date"
+                      value={event.endDate || ''}
+                      onChange={(e) => updateEvent(event.id, { endDate: e.target.value })}
+                      className="h-10 border-0 border-b border-border/30 rounded-none focus:border-primary bg-transparent"
+                      placeholder="Data fine"
+                    />
+                  </div>
+                </div>
               </div>
               
               <div className="flex items-center gap-3">
@@ -225,7 +243,7 @@ const EventDetail = () => {
                 <Input
                   value={event.notes || ''}
                   onChange={(e) => updateEvent(event.id, { notes: e.target.value })}
-                  className="flex-1 h-10 border-0 border-b-2 border-border rounded-none focus:border-primary bg-transparent"
+                  className="flex-1 h-10 border-0 border-b border-border/30 rounded-none focus:border-primary bg-transparent"
                   placeholder="Necessità di GPG..."
                 />
               </div>
@@ -235,15 +253,15 @@ const EventDetail = () => {
                 <Input
                   value={event.activityCode || ''}
                   onChange={(e) => updateEvent(event.id, { activityCode: e.target.value })}
-                  className="flex-1 h-10 border-0 border-b-2 border-border rounded-none focus:border-primary bg-transparent"
+                  className="flex-1 h-10 border-0 border-b border-border/30 rounded-none focus:border-primary bg-transparent"
                   placeholder="Codice attività"
                 />
               </div>
             </div>
           </div>
 
-          {/* Right side - Shift Planning Form (40%) */}
-          <div className="flex-1 max-w-[40%]">
+          {/* Right side - Shift Planning Form (60%) */}
+          <div className="flex-[0_0_60%]">
             <ShiftPlanningForm onSubmit={handleShiftSubmit} />
           </div>
         </div>
@@ -427,16 +445,16 @@ const EventDetail = () => {
                     ) : "-"}
                   </TableCell>
                   <TableCell>
-                    {row.notes && row.notes.trim() !== "" ? (
+                    {slotNotes[`${row.id}-${row.slotIndex}`] || row.notes ? (
                       <Button 
                         size="sm" 
                         variant="ghost" 
                         onClick={() => {
-                          setEditingNotes(row.id);
-                          setTempNotes(row.notes || "");
+                          setEditingNotes(`${row.id}-${row.slotIndex}`);
+                          setTempNotes(slotNotes[`${row.id}-${row.slotIndex}`] || row.notes || "");
                         }}
                         aria-label="Visualizza/Modifica note"
-                        title={row.notes}
+                        title={slotNotes[`${row.id}-${row.slotIndex}`] || row.notes}
                       >
                         <FileText className="h-4 w-4" />
                       </Button>
@@ -445,7 +463,7 @@ const EventDetail = () => {
                         size="sm" 
                         variant="ghost" 
                         onClick={() => {
-                          setEditingNotes(row.id);
+                          setEditingNotes(`${row.id}-${row.slotIndex}`);
                           setTempNotes("");
                         }}
                         aria-label="Aggiungi note"
