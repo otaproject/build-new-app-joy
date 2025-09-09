@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import InstallButton from "./InstallButton";
 
 const Header = () => {
   const { pathname } = useLocation();
@@ -37,8 +38,11 @@ const Header = () => {
             EVENTI
           </Link>
         </nav>
-        <div className="text-sm text-header-foreground/80">
-          Admin
+        <div className="flex items-center gap-3">
+          <InstallButton />
+          <div className="text-sm text-header-foreground/80">
+            Admin
+          </div>
         </div>
       </div>
     </header>
