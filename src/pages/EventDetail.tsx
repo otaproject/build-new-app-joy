@@ -36,6 +36,7 @@ const EventDetail = () => {
   const updateShiftTime = useAppStore(s => s.updateShiftTime);
   const updateShiftDate = useAppStore(s => s.updateShiftDate);
   const updateShiftActivityType = useAppStore(s => s.updateShiftActivityType);
+  const updateShiftPauseHours = useAppStore(s => s.updateShiftPauseHours);
   const deleteShift = useAppStore(s => s.deleteShift);
   
   const shifts = useAppStore(s => s.getShiftsByEvent(id!));
@@ -48,6 +49,7 @@ const EventDetail = () => {
   const [slotTimes, setSlotTimes] = useState<Record<string, { startTime: string; endTime: string }>>({});
   const [editingPhones, setEditingPhones] = useState<Record<string, string>>({});
   const [slotNotes, setSlotNotes] = useState<Record<string, string>>({});
+  const [pauseHours, setPauseHours] = useState<Record<string, number>>({});
   // Initialize row edit state: unassigned rows start in edit mode
   const initializeRowEdit = (shifts: any[]) => {
     const initialState: Record<string, boolean> = {};
@@ -175,7 +177,7 @@ const EventDetail = () => {
     return operator?.phone || "-";
   };
 
-  const calculateHours = (startTime: string, endTime: string) => {
+  const calculateHours = (startTime: string, endTime: string, pauseHours: number = 0) => {
     const start = new Date(`2000-01-01T${startTime}`);
     let end = new Date(`2000-01-01T${endTime}`);
     
@@ -185,7 +187,8 @@ const EventDetail = () => {
     }
     
     const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    return hours.toFixed(1);
+    const effectiveHours = Math.max(0, hours - pauseHours);
+    return effectiveHours.toFixed(1);
   };
 
   const handleSaveNotes = (noteKey: string) => {
@@ -304,8 +307,8 @@ const EventDetail = () => {
       if (sort.key === 'startTime') { va = a.startTime; vb = b.startTime; }
       if (sort.key === 'endTime') { va = a.endTime; vb = b.endTime; }
       if (sort.key === 'hours') { 
-        va = calculateHours(a.startTime, a.endTime);
-        vb = calculateHours(b.startTime, b.endTime);
+        va = calculateHours(a.startTime, a.endTime, shifts.find(s => s.id === a.id)?.pauseHours || 0);
+        vb = calculateHours(b.startTime, b.endTime, shifts.find(s => s.id === b.id)?.pauseHours || 0);
       }
       const comp = va.localeCompare(vb);
       return sort.dir === 'asc' ? comp : -comp;
@@ -320,13 +323,14 @@ const EventDetail = () => {
         const slotKey = `${row.id}-${row.slotIndex}`;
         const hours = parseFloat(calculateHours(
           slotTimes[slotKey]?.startTime || row.startTime,
-          slotTimes[slotKey]?.endTime || row.endTime
+          slotTimes[slotKey]?.endTime || row.endTime,
+          pauseHours[slotKey] || shifts.find(s => s.id === row.id)?.pauseHours || 0
         ));
         return total + hours;
       }
       return total;
     }, 0);
-  }, [sortedShifts, slotTimes]);
+  }, [sortedShifts, slotTimes, pauseHours]);
 
   return (
     <main className="container py-8">
@@ -599,6 +603,7 @@ const EventDetail = () => {
                   </Button>
                 </TableHead>
                 
+                <TableHead>ORE PAUSA</TableHead>
                 <TableHead>
                   <Button variant="ghost" size="sm" onClick={() => toggleSort('hours')} className="px-0">
                     <span className="mr-2">ORE TOTALI</span>
@@ -740,18 +745,46 @@ const EventDetail = () => {
                          <span className="text-sm font-medium text-orange-700">Non assegnato</span>
                        )
                      )}
+                    </TableCell>
+                   <TableCell>
+                     {rowEdit[`${row.id}-${row.slotIndex}`] ? (
+                       <Input
+                         type="number"
+                         min="0"
+                         max="24"
+                         step="0.5"
+                         value={pauseHours[`${row.id}-${row.slotIndex}`] || shifts.find(s => s.id === row.id)?.pauseHours || 0}
+                         onChange={(e) => {
+                           const value = parseFloat(e.target.value) || 0;
+                           setPauseHours(prev => ({
+                             ...prev,
+                             [`${row.id}-${row.slotIndex}`]: value
+                           }));
+                         }}
+                         onBlur={() => {
+                           const value = pauseHours[`${row.id}-${row.slotIndex}`] || 0;
+                           updateShiftPauseHours(row.id, value);
+                         }}
+                         className="h-8 text-sm w-16 text-center"
+                       />
+                     ) : (
+                       <span className="text-sm">
+                         {pauseHours[`${row.id}-${row.slotIndex}`] || shifts.find(s => s.id === row.id)?.pauseHours || 0}h
+                       </span>
+                     )}
                    </TableCell>
-                  <TableCell>
-                    {rowEdit[`${row.id}-${row.slotIndex}`] ? (
-                      <Input
-                        type="number"
-                        min="0"
-                        max="24"
-                        step="0.5"
-                        value={calculateHours(
-                          slotTimes[`${row.id}-${row.slotIndex}`]?.startTime || row.startTime, 
-                          slotTimes[`${row.id}-${row.slotIndex}`]?.endTime || row.endTime
-                        )}
+                   <TableCell>
+                     {rowEdit[`${row.id}-${row.slotIndex}`] ? (
+                       <Input
+                         type="number"
+                         min="0"
+                         max="24"
+                         step="0.5"
+                         value={calculateHours(
+                           slotTimes[`${row.id}-${row.slotIndex}`]?.startTime || row.startTime, 
+                           slotTimes[`${row.id}-${row.slotIndex}`]?.endTime || row.endTime,
+                           pauseHours[`${row.id}-${row.slotIndex}`] || shifts.find(s => s.id === row.id)?.pauseHours || 0
+                         )}
                         onChange={(e) => {
                           const newHours = parseFloat(e.target.value) || 0;
                           const startTime = slotTimes[`${row.id}-${row.slotIndex}`]?.startTime || row.startTime;
@@ -772,12 +805,13 @@ const EventDetail = () => {
                         className="h-8 text-sm w-16 text-center"
                       />
                     ) : (
-                      <span className="text-sm font-medium">
-                        {calculateHours(
-                          slotTimes[`${row.id}-${row.slotIndex}`]?.startTime || row.startTime, 
-                          slotTimes[`${row.id}-${row.slotIndex}`]?.endTime || row.endTime
-                        )}h
-                      </span>
+                       <span className="text-sm font-medium">
+                         {calculateHours(
+                           slotTimes[`${row.id}-${row.slotIndex}`]?.startTime || row.startTime, 
+                           slotTimes[`${row.id}-${row.slotIndex}`]?.endTime || row.endTime,
+                           pauseHours[`${row.id}-${row.slotIndex}`] || shifts.find(s => s.id === row.id)?.pauseHours || 0
+                         )}h
+                       </span>
                     )}
                   </TableCell>
                   <TableCell>

@@ -94,6 +94,7 @@ export interface Shift {
   teamLeaderId?: ID;
   requiredOperators: number;
   notes?: string;
+  pauseHours?: number;
 }
 
 interface AppState {
@@ -135,6 +136,7 @@ interface AppState {
   updateShiftTime: (shiftId: ID, data: { startTime?: string; endTime?: string }) => void;
   updateShiftDate: (shiftId: ID, date: string) => void;
   updateShiftActivityType: (shiftId: ID, activityType: ActivityType | undefined) => void;
+  updateShiftPauseHours: (shiftId: ID, pauseHours: number) => void;
   deleteShift: (shiftId: ID) => void;
   getShiftsByEvent: (eventId: ID) => Shift[];
   updateEventAddress: (eventId: ID, address: string) => void;
@@ -488,6 +490,14 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           shifts: state.shifts.map((s) =>
             s.id === shiftId ? { ...s, activityType } : s
+          ),
+        }));
+      },
+
+      updateShiftPauseHours: (shiftId, pauseHours) => {
+        set((state) => ({
+          shifts: state.shifts.map((s) =>
+            s.id === shiftId ? { ...s, pauseHours } : s
           ),
         }));
       },
