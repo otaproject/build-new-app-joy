@@ -26,14 +26,14 @@ export default function TaskList({ shifts, onUpdateShift }: Props) {
     return <div className="text-sm text-muted-foreground px-2 py-4">Nessun turno inserito.</div>;
   }
 
-  // Totali (senza pause)
+  // Totali (con pause sottratte)
   const totalEffective = shifts.reduce((sum, s) => {
-    const eff = parseFloat(calcEffectiveHours(s.startTime, s.endTime));
+    const eff = parseFloat(calcEffectiveHours(s.startTime, s.endTime, s.pauseHours ?? 0));
     return sum + (isNaN(eff) ? 0 : eff);
   }, 0);
 
   const totalOperatorHours = shifts.reduce((sum, s) => {
-    const eff = parseFloat(calcEffectiveHours(s.startTime, s.endTime));
+    const eff = parseFloat(calcEffectiveHours(s.startTime, s.endTime, s.pauseHours ?? 0));
     const ops = clampInt(s.numOperators ?? 1, 1, 20);
     return sum + (isNaN(eff) ? 0 : eff) * ops;
   }, 0);
@@ -50,6 +50,7 @@ export default function TaskList({ shifts, onUpdateShift }: Props) {
             <th>Operatore</th>
             <th>TEL</th>
             <th>N° operatori</th>
+            <th>Ore pausa</th>
             <th>Ore effettive</th>
             <th>Ore operatori</th>
             <th className="text-right pr-3">Azioni</th>
@@ -62,7 +63,7 @@ export default function TaskList({ shifts, onUpdateShift }: Props) {
         </tbody>
         <tfoot className="bg-muted/30 font-semibold">
           <tr>
-            <td colSpan={7} className="px-3 py-2 text-right">Totali:</td>
+            <td colSpan={8} className="px-3 py-2 text-right">Totali:</td>
             <td className="px-3 py-2">{totalEffective.toFixed(2)}</td>
             <td className="px-3 py-2">{totalOperatorHours.toFixed(2)}</td>
             <td />
@@ -76,6 +77,7 @@ export default function TaskList({ shifts, onUpdateShift }: Props) {
 function Row({ shift, onUpdate }: { shift: Shift; onUpdate: (patch: Partial<Shift>) => void }) {
   const [isEditable, setIsEditable] = useState(false);
   const [opsVal, setOpsVal] = useState<string>(String(clampInt(shift.numOperators ?? 1, 1, 20)));
+  const [pauseVal, setPauseVal] = useState<string>(String(shift.pauseHours ?? 0));
 
   const commitOps = () => {
     const n = clampInt(parseInt(opsVal || "1", 10), 1, 20);
@@ -84,7 +86,14 @@ function Row({ shift, onUpdate }: { shift: Shift; onUpdate: (patch: Partial<Shif
     if (n !== current) onUpdate({ numOperators: n });
   };
 
-  const effectiveHoursStr = calcEffectiveHours(shift.startTime, shift.endTime);
+  const commitPause = () => {
+    const n = Math.max(0, parseFloat(pauseVal || "0"));
+    const current = shift.pauseHours ?? 0;
+    setPauseVal(String(n));
+    if (n !== current) onUpdate({ pauseHours: n });
+  };
+
+  const effectiveHoursStr = calcEffectiveHours(shift.startTime, shift.endTime, shift.pauseHours ?? 0);
   const effectiveHours = parseFloat(effectiveHoursStr);
   const operators = clampInt(shift.numOperators ?? 1, 1, 20);
   const operatorHours = isNaN(effectiveHours) ? "0.00" : (effectiveHours * operators).toFixed(2);
@@ -205,6 +214,25 @@ function Row({ shift, onUpdate }: { shift: Shift; onUpdate: (patch: Partial<Shif
         )}
       </td>
 
+      <td className="whitespace-nowrap">
+        {isEditable ? (
+          <Input
+            type="number"
+            min={0}
+            max={24}
+            step={0.5}
+            className="h-8 w-20 text-right"
+            value={pauseVal}
+            onChange={(e) => setPauseVal(e.target.value)}
+            onBlur={commitPause}
+            onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+            placeholder="0"
+          />
+        ) : (
+          (shift.pauseHours ?? 0).toString()
+        )}
+      </td>
+
       <td className="whitespace-nowrap">{effectiveHoursStr}</td>
       <td className="whitespace-nowrap">{operatorHours}</td>
       
@@ -227,7 +255,7 @@ function Row({ shift, onUpdate }: { shift: Shift; onUpdate: (patch: Partial<Shif
 }
 
 // Utils
-function calcEffectiveHours(start: string, end: string): string {
+function calcEffectiveHours(start: string, end: string, pauseHours: number = 0): string {
   try {
     const [sh, sm] = start.split(":").map(Number);
     const [eh, em] = end.split(":").map(Number);
@@ -235,6 +263,7 @@ function calcEffectiveHours(start: string, end: string): string {
     const endMin = eh * 60 + em;
     let diff = (endMin - startMin) / 60;
     if (diff < 0) diff = 0;
+    diff = Math.max(0, diff - pauseHours); // Sottrae le ore di pausa
     return diff.toFixed(2);
   } catch {
     return "0.00";
