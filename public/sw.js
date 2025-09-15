@@ -43,7 +43,7 @@ self.addEventListener('push', (event) => {
     data: {
       dateOfArrival: Date.now(),
       primaryKey: '1',
-      url: '/operator/dashboard'
+      url: '/operator'
     },
     actions: [
       {
@@ -51,7 +51,9 @@ self.addEventListener('push', (event) => {
         title: 'Visualizza',
         icon: '/pwa-192x192.png'
       }
-    ]
+    ],
+    requireInteraction: true,
+    tag: 'ezystaff-notification'
   };
 
   let notificationOptions = defaultOptions;
@@ -61,13 +63,21 @@ self.addEventListener('push', (event) => {
       const pushData = event.data.json();
       console.log('Push data received:', pushData);
       
+      // Update app badge
+      if ('setAppBadge' in self && pushData.badgeCount) {
+        self.setAppBadge(pushData.badgeCount);
+      }
+      
       notificationOptions = {
         ...defaultOptions,
         title: pushData.title || 'EZYSTAFF',
         body: pushData.body || defaultOptions.body,
         data: {
           ...defaultOptions.data,
-          ...pushData.data
+          eventId: pushData.eventId,
+          shiftId: pushData.shiftId,
+          type: pushData.type,
+          url: pushData.shiftId ? `/operator/shift/${pushData.shiftId}` : '/operator'
         }
       };
     } catch (e) {
@@ -90,7 +100,7 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   if (event.action === 'view' || !event.action) {
-    const urlToOpen = event.notification.data?.url || '/operator/dashboard';
+    const urlToOpen = event.notification.data?.url || '/operator';
     
     event.waitUntil(
       clients.matchAll({
@@ -123,5 +133,19 @@ self.addEventListener('notificationclick', (event) => {
         }
       })
     );
+  }
+});
+
+// Message event for communication with main thread (badge updates)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'UPDATE_BADGE') {
+    if ('setAppBadge' in self) {
+      const count = event.data.count || 0;
+      if (count > 0) {
+        self.setAppBadge(count);
+      } else {
+        self.clearAppBadge();
+      }
+    }
   }
 });

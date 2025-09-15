@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Clock, Users, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, ChevronRight, LogIn, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRole } from '@/hooks/useRole';
 import { useNavigate } from 'react-router-dom';
+import { useCheckInOut } from '@/hooks/useCheckInOut';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
@@ -28,6 +29,52 @@ interface AssignedShift {
     };
   };
 }
+
+const CheckInButton = ({ shiftId }: { shiftId: string }) => {
+  const { isCheckedIn, isCheckedOut, checkInShift, checkOutShift, loading } = useCheckInOut(shiftId);
+
+  const handleCheckIn = async () => {
+    await checkInShift('');
+  };
+
+  const handleCheckOut = async () => {
+    await checkOutShift('');
+  };
+
+  if (isCheckedOut) {
+    return (
+      <Button variant="outline" disabled className="flex-1">
+        <LogOut className="h-4 w-4 mr-2" />
+        Completato
+      </Button>
+    );
+  }
+
+  if (isCheckedIn) {
+    return (
+      <Button 
+        onClick={handleCheckOut}
+        disabled={loading}
+        variant="secondary"
+        className="flex-1"
+      >
+        <LogOut className="h-4 w-4 mr-2" />
+        Check-out
+      </Button>
+    );
+  }
+
+  return (
+    <Button 
+      onClick={handleCheckIn}
+      disabled={loading}
+      className="flex-1"
+    >
+      <LogIn className="h-4 w-4 mr-2" />
+      Check-in
+    </Button>
+  );
+};
 
 export const OperatorEventsList = () => {
   const { profile } = useRole();
@@ -199,11 +246,12 @@ export const OperatorEventsList = () => {
               </div>
             )}
             
-            <div className="pt-2 border-t">
+            <div className="pt-2 border-t flex gap-2">
+              <CheckInButton shiftId={shift.id} />
               <Button 
                 onClick={() => navigate(`/operator/shift/${shift.id}`)}
-                className="w-full"
                 variant="outline"
+                className="flex-1"
               >
                 Vedi dettagli
                 <ChevronRight className="h-4 w-4 ml-2" />

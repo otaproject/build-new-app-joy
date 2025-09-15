@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/hooks/useRole';
+import { useAppBadge } from '@/hooks/useAppBadge';
 import { OperatorEventsList } from '@/components/operator/OperatorEventsList';
 import { Card, CardContent } from '@/components/ui/card';
 import { User, Calendar, Settings } from 'lucide-react';
@@ -11,6 +12,9 @@ export default function OperatorDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: roleLoading, isOperator } = useRole();
   const navigate = useNavigate();
+  
+  // Initialize app badge for PWA notifications
+  useAppBadge();
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
